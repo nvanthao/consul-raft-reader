@@ -20,6 +20,6 @@ docker-publish: docker-build-local
 	@docker push -a $(DOCKER_IMAGE)
 
 .PHONY: install
-install:
+install: tidy
 	@echo "--> Install binary"
 	@go install .

@@ -2,7 +2,9 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 
@@ -95,6 +97,11 @@ func (s *Store) Stats() {
 }
 
 func NewStore(file string) (*Store, error) {
+	// check if file exists
+	if _, err := os.Stat(file); errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("file %s does not exist", file)
+	}
+
 	store, err := raftboltdb.New(raftboltdb.Options{
 		BoltOptions: &bbolt.Options{
 			NoFreelistSync: true,

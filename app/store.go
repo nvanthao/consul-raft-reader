@@ -94,6 +94,12 @@ func (s *Store) Stats() {
 	for _, s := range ss {
 		fmt.Printf("%s: %d \n", s.Key, s.Value)
 	}
+
+	fmt.Println("=== LATEST CLUSTER MEMBERS ===")
+	s.printLatestLogConfiguration(logs)
+
+	fmt.Println("=== LATEST AUTOPILOT CONFIG ===")
+	s.printAutopilotConfiguration(logs)
 }
 
 func NewStore(file string) (*Store, error) {
@@ -201,4 +207,44 @@ func sortMapByValue(m map[string]int) []kv {
 	})
 
 	return ss
+}
+
+func (s *Store) printLatestLogConfiguration(logs []RaftLog) {
+	var latestIndex uint64
+	for _, log := range logs {
+		if log.Type == "LogConfiguration" {
+			if log.Index > latestIndex {
+				latestIndex = log.Index
+			}
+		}
+	}
+	if latestIndex != 0 {
+		var log raft.Log
+		err := s.store.GetLog(latestIndex, &log)
+		if err != nil {
+			return
+		}
+		fmt.Printf("LogConfiguration Index: %d \n", latestIndex)
+		fmt.Println(raft.DecodeConfiguration(log.Data))
+	}
+}
+
+func (s *Store) printAutopilotConfiguration(logs []RaftLog) {
+	var latestIndex uint64
+	for _, log := range logs {
+		if log.Type == "LogCommand" && log.MsgType == "Autopilot" {
+			if log.Index > latestIndex {
+				latestIndex = log.Index
+			}
+		}
+	}
+	if latestIndex != 0 {
+		var log raft.Log
+		err := s.store.GetLog(latestIndex, &log)
+		if err != nil {
+			return
+		}
+		fmt.Printf("Autopilot Index: %d \n", latestIndex)
+		fmt.Println(getLogCommand(log.Data))
+	}
 }

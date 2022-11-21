@@ -35,12 +35,12 @@ var printCmd = &cobra.Command{
 			log.Fatalf("unable to read Raft file: %s", err)
 		}
 
-		if start < store.FirstIndex || end > store.LastIndex {
-			log.Fatalf("allowed range: [%d, %d]", store.FirstIndex, store.LastIndex)
+		// set the start to stores FirstIndex if out of range
+		if start < store.FirstIndex {
+			start = store.FirstIndex
 		}
 
-		// default to print all logs
-		if end == 0 {
+		if end > store.LastIndex || end == 0 {
 			end = store.LastIndex
 		}
 
